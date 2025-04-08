@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Azure SVG Icons Gallery</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f8f8f8;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+      .category {
+        margin-bottom: 40px;
+        background: #fff;
+        padding: 20px;
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .category h2 {
+        text-transform: capitalize;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+        margin-bottom: 20px;
+      }
+      .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 20px;
+      }
+      .icon-card {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+        border-radius: 4px;
+        background: #fafafa;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      .icon-card img {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        margin-bottom: 10px;
+      }
+      .btn {
+        display: inline-block;
+        margin: 3px;
+        padding: 5px 10px;
+        border: none;
+        background-color: #0078d4;
+        color: #fff;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Azure SVG Icons Gallery</h1>
+    <div id="gallery">Loading icons…</div>
+
+    <script>
+      // Utility: Copy text to the clipboard
+      function copyToClipboard(text) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            alert("Copied to clipboard!");
+          })
+          .catch((err) => {
+            alert("Error copying to clipboard: " + err);
+          });
+      }
+
+      // Convert SVG markup to a simplistic JSX version.
+      function svgToJsx(svgText) {
+        let jsx = svgText;
+        // Replace "class" with "className"
+        jsx = jsx.replace(/class=/g, "className=");
+        // Convert hyphenated attributes to camelCase (e.g., stroke-width to strokeWidth)
+        jsx = jsx.replace(/([a-z0-9])\-([a-z])/gi, (match, p1, p2) => {
+          return p1 + p2.toUpperCase();
+        });
+        return jsx;
+      }
+
+      // Fetch the SVG content and copy as raw SVG.
+      async function copySvg(path) {
+        try {
+          const response = await fetch(path);
+          if (!response.ok) throw new Error("Network error");
+          const svgText = await response.text();
+          copyToClipboard(svgText);
+        } catch (error) {
+          alert("Error fetching SVG: " + error);
+        }
+      }
+
+      // Fetch the SVG, convert to JSX, and copy.
+      async function copyJsx(path) {
+        try {
+          const response = await fetch(path);
+          if (!response.ok) throw new Error("Network error");
+          const svgText = await response.text();
+          const jsxText = svgToJsx(svgText);
+          copyToClipboard(jsxText);
+        } catch (error) {
+          alert("Error fetching SVG: " + error);
+        }
+      }
+
+      // Render the icon gallery using data from icons.json
+      function renderGallery(data) {
+        const galleryDiv = document.getElementById("gallery");
+        galleryDiv.innerHTML = ""; // Clear "Loading icons…" text
+
+        for (const [category, iconsArray] of Object.entries(data)) {
+          // Create a container for each category.
+          const categoryDiv = document.createElement("div");
+          categoryDiv.classList.add("category");
+
+          const header = document.createElement("h2");
+          header.textContent = category;
+          categoryDiv.appendChild(header);
+
+          const gridDiv = document.createElement("div");
+          gridDiv.classList.add("icon-grid");
+
+          iconsArray.forEach((icon) => {
+            const cardDiv = document.createElement("div");
+            cardDiv.classList.add("icon-card");
+
+            // Create an image element to preview the SVG.
+            const img = document.createElement("img");
+            img.src = icon.path;
+            img.alt = icon.name;
+            cardDiv.appendChild(img);
+
+            // Display the icon's name.
+            const nameDiv = document.createElement("div");
+            nameDiv.textContent = icon.name;
+            cardDiv.appendChild(nameDiv);
+
+            // Button to copy the raw SVG code.
+            const btnSvg = document.createElement("button");
+            btnSvg.classList.add("btn");
+            btnSvg.textContent = "Copy SVG";
+            btnSvg.onclick = () => copySvg(icon.path);
+            cardDiv.appendChild(btnSvg);
+
+            // Button to copy the converted JSX.
+            const btnJsx = document.createElement("button");
+            btnJsx.classList.add("btn");
+            btnJsx.textContent = "Copy JSX";
+            btnJsx.onclick = () => copyJsx(icon.path);
+            cardDiv.appendChild(btnJsx);
+
+            gridDiv.appendChild(cardDiv);
+          });
+
+          categoryDiv.appendChild(gridDiv);
+          galleryDiv.appendChild(categoryDiv);
+        }
+      }
+
+      // Fetch the icons.json file and render the gallery.
+      document.addEventListener("DOMContentLoaded", () => {
+        fetch("icons.json")
+          .then((response) => response.json())
+          .then((data) => {
+            renderGallery(data);
+          })
+          .catch((error) => {
+            console.error("Error fetching icons.json:", error);
+            document.getElementById("gallery").textContent =
+              "Failed to load icon data.";
+          });
+      });
+    </script>
+  </body>
+</html>
